@@ -1,0 +1,41 @@
+services:
+  # Banco de Dados
+  db:
+    image: postgres:15
+    container_name: SDDB2_container
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: l1l2r1r2
+      POSTGRES_DB: voos_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  # Interface de Gestão do Banco
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: pgadmin_voos
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@admin.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+    ports:
+      - "8080:80"
+    depends_on:
+      - db
+
+  # Ambiente de Desenvolvimento (Spark + Jupyter)
+  spark-jupyter:
+    image: jupyter/pyspark-notebook:latest
+    container_name: jupyter_spark
+    ports:
+      - "8888:8888"
+    volumes:
+      - ./notebooks:/home/jovyan/work
+      - ./data:/home/jovyan/data
+    user: root
+    environment:
+      - GRANT_SUDO=yes
+
+volumes:
+  postgres_data:
