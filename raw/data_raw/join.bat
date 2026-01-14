@@ -10,7 +10,7 @@ echo.
 echo Verificando a integridade do arquivo...
 echo.
 
-set "EXPECTED_SHA=COLOQUE_O_SHA256_AQUI"
+set "EXPECTED_SHA=84c1106219d195e458875be8e454d24cafc6424aeabea00a331bdd5cc5ac95d4"
 set "FILE_TO_CHECK=MICRODADOS_ENEM_2021.csv"
 set "ACTUAL_SHA="
 
