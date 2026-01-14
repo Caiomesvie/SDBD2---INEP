@@ -64,4 +64,5 @@ Siga os passos abaixo para configurar o ambiente e executar os notebooks Jupyter
     * Feche o Jupyter Lab pressionando `Ctrl+C` no terminal.
     * Desative o ambiente virtual com o comando:
 
-    ```bash deactivate```
+    ```bash
+     deactivate```
