@@ -59,6 +59,13 @@ Siga os passos abaixo para configurar o ambiente e executar os notebooks Jupyter
     python3 -m pip install -r requirements.txt
     ```
 
+     Se de errado os dois acima 
+
+    ```bash
+    # O arquivo requirements.txt contém todas as bibliotecas necessárias
+    ./.venv/bin/pip install -r requirements.txt
+    ```
+
 4. **Inicie o Jupyter Lab:**
 
     ```bash
