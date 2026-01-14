@@ -36,8 +36,8 @@ Siga os passos abaixo para configurar o ambiente e executar os notebooks Jupyter
 2. **Crie e ative um ambiente virtual (venv):**
 
     ```bash
-    # Cria a venv no diretório 'venv'
-    python3 -m venv venv
+    # Cria a venv no diretório '.venv'
+    python3 -m venv .venv
 
     # Ativa a venv (Linux/macOS)
     source venv/bin/activate
@@ -50,6 +50,13 @@ Siga os passos abaixo para configurar o ambiente e executar os notebooks Jupyter
     ```bash
     # O arquivo requirements.txt contém todas as bibliotecas necessárias
     pip3 install -r requirements.txt
+    ```
+
+    Se de errado tente esse outro comadno
+
+    ```bash
+    # O arquivo requirements.txt contém todas as bibliotecas necessárias
+    python3 -m pip install -r requirements.txt
     ```
 
 4. **Inicie o Jupyter Lab:**
@@ -65,4 +72,5 @@ Siga os passos abaixo para configurar o ambiente e executar os notebooks Jupyter
     * Desative o ambiente virtual com o comando:
 
     ```bash
-     deactivate```
+     deactivate 
+     ```
