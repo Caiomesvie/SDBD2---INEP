@@ -5,3 +5,7 @@ __pycache__/
 *.csv
 *.xlsx
 raw/data_raw/MICRODADOS_ENEM_2021.csv
+_SUCCESS
+._SUCCESS.crc
+.part-*.csv.crc
+postgresql-42.7.3.jar

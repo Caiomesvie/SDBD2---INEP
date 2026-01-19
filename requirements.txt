@@ -14,3 +14,4 @@ reverse_geocoder
 scikit-learn
 missingno
 dotenv
+psycopg2-binary
