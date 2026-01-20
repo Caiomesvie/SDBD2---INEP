@@ -14,14 +14,7 @@ CREATE TABLE silver.microdados_enem (
     TP_ST_CONCLUSAO INTEGER,
     TP_ANO_CONCLUIU INTEGER,
     TP_ESCOLA INTEGER,
-    TP_ENSINO INTEGER,
     IN_TREINEIRO INTEGER,
-    CO_MUNICIPIO_ESC INTEGER,
-    NO_MUNICIPIO_ESC VARCHAR(150),
-    CO_UF_ESC INTEGER,
-    TP_DEPENDENCIA_ADM_ESC INTEGER,
-    TP_LOCALIZACAO_ESC INTEGER,
-    TP_SIT_FUNC_ESC INTEGER,
     CO_MUNICIPIO_PROVA INTEGER,
     NO_MUNICIPIO_PROVA VARCHAR(150),
     CO_UF_PROVA INTEGER,
@@ -92,16 +85,7 @@ COMMENT ON COLUMN silver.microdados_enem.TP_NACIONALIDADE IS 'Nacionalidade';
 COMMENT ON COLUMN silver.microdados_enem.TP_ST_CONCLUSAO IS 'Situação de conclusão do Ensino Médio';
 COMMENT ON COLUMN silver.microdados_enem.TP_ANO_CONCLUIU IS 'Ano de Conclusão do Ensino Médio';
 COMMENT ON COLUMN silver.microdados_enem.TP_ESCOLA IS 'Tipo de escola do Ensino Médio';
-COMMENT ON COLUMN silver.microdados_enem.TP_ENSINO IS 'Tipo de instituição que concluiu ou concluirá o Ensino Médio';
 COMMENT ON COLUMN silver.microdados_enem.IN_TREINEIRO IS 'Indica se o inscrito fez a prova com intuito de apenas treinar seus conhecimentos';
-
--- DADOS DA ESCOLA
-COMMENT ON COLUMN silver.microdados_enem.CO_MUNICIPIO_ESC IS 'Código do município da escola';
-COMMENT ON COLUMN silver.microdados_enem.NO_MUNICIPIO_ESC IS 'Nome do município da escola';
-COMMENT ON COLUMN silver.microdados_enem.CO_UF_ESC IS 'Código da Unidade da Federação da escola';
-COMMENT ON COLUMN silver.microdados_enem.TP_DEPENDENCIA_ADM_ESC IS 'Dependência administrativa (Escola)';
-COMMENT ON COLUMN silver.microdados_enem.TP_LOCALIZACAO_ESC IS 'Localização (Escola)';
-COMMENT ON COLUMN silver.microdados_enem.TP_SIT_FUNC_ESC IS 'Situação de funcionamento (Escola)';
 
 -- DADOS DO LOCAL DE APLICAÇÃO
 COMMENT ON COLUMN silver.microdados_enem.CO_MUNICIPIO_PROVA IS 'Código do município da aplicação da prova';
