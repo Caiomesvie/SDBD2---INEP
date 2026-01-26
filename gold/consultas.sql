@@ -154,8 +154,111 @@ FROM CalculoNotasRaca c
 GROUP BY c.COD_COR_RAC
 ORDER BY Media_Geral_Enem DESC;
 
---
+-- Impacto do acesso à internet no desempenho médio
+WITH NotasInternet AS (
+    SELECT 
+        s.IND_ACE_INT,
+        (f.VAL_NOT_NAT + f.VAL_NOT_HUM + f.VAL_NOT_LIN + f.VAL_NOT_MAT + f.VAL_NOT_RED) / 5 AS media_aluno
+    FROM gold.FAT_DES f
+    JOIN gold.DIM_SOC s ON f.SOC_SRK = s.SOC_SRK
+    WHERE f.IND_PRE_NAT = 1 
+      AND f.IND_PRE_HUM = 1 
+      AND f.IND_PRE_LIN = 1 
+      AND f.IND_PRE_MAT = 1
+)
+SELECT 
+    CASE IND_ACE_INT
+        WHEN 'A' THEN 'Não Possui'
+        WHEN 'B' THEN 'Possui'
+        ELSE 'Não Informado'
+    END AS Acesso_Internet,
+    COUNT(*) AS Qtd_Candidatos,
+    ROUND(AVG(media_aluno), 2) AS Media_Geral
+FROM NotasInternet
+GROUP BY IND_ACE_INT
+ORDER BY Media_Geral DESC;
 
---
+-- Desempenho por escolaridade da mãe (Indicador forte de capital cultural)
+WITH NotasEscolaridadeMae AS (
+    SELECT 
+        s.COD_ESC_MAE,
+        (f.VAL_NOT_NAT + f.VAL_NOT_HUM + f.VAL_NOT_LIN + f.VAL_NOT_MAT + f.VAL_NOT_RED) / 5 AS media_aluno
+    FROM gold.FAT_DES f
+    JOIN gold.DIM_SOC s ON f.SOC_SRK = s.SOC_SRK
+    WHERE f.IND_PRE_NAT = 1 
+      AND f.IND_PRE_HUM = 1 
+      AND f.IND_PRE_LIN = 1 
+      AND f.IND_PRE_MAT = 1
+)
+SELECT 
+    CASE COD_ESC_MAE
+        WHEN 'A' THEN 'Nunca estudou'
+        WHEN 'B' THEN 'Não completou a 4ª série/5º ano do Ensino Fundamental'
+        WHEN 'C' THEN 'Completou a 4ª série/5º ano, mas não completou a 8ª série/9º ano do Ensino Fundamental'
+        WHEN 'D' THEN 'Completou a 8ª série/9º ano do Ensino Fundamental, mas não completou o Ensino Médio'
+        WHEN 'E' THEN 'Completou o Ensino Médio, mas não completou a Faculdade'
+        WHEN 'F' THEN 'Completou a Faculdade, mas não completou a Pós-graduação'
+        WHEN 'G' THEN 'Completou a Pós-graduação'
+        WHEN 'H' THEN 'Não sabe'
+        ELSE 'Não Informado'
+    END AS Escolaridade_Mae,
+    COUNT(*) AS Qtd_Candidatos,
+    ROUND(AVG(media_aluno), 2) AS Media_Geral
+FROM NotasEscolaridadeMae
+GROUP BY COD_ESC_MAE
+ORDER BY COD_ESC_MAE;
 
---
+-- Comparativo de desempenho por Gênero
+WITH NotasGenero AS (
+    SELECT 
+        p.TIP_SEX,
+        (f.VAL_NOT_NAT + f.VAL_NOT_HUM + f.VAL_NOT_LIN + f.VAL_NOT_MAT + f.VAL_NOT_RED) / 5 AS media_aluno
+    FROM gold.FAT_DES f
+    JOIN gold.DIM_PAR p ON f.PAR_SRK = p.PAR_SRK
+    WHERE f.IND_PRE_NAT = 1 
+      AND f.IND_PRE_HUM = 1 
+      AND f.IND_PRE_LIN = 1 
+      AND f.IND_PRE_MAT = 1
+)
+SELECT 
+    CASE TIP_SEX
+        WHEN 'M' THEN 'Masculino'
+        WHEN 'F' THEN 'Feminino'
+        ELSE 'Não Informado'
+    END AS Genero,
+    COUNT(*) AS Qtd_Candidatos,
+    ROUND(AVG(media_aluno), 2) AS Media_Geral
+FROM NotasGenero
+GROUP BY TIP_SEX
+ORDER BY Media_Geral DESC;
+
+-- Verifica os 5 municípios com maior e menor desvio padrão (Desigualdade de notas)
+WITH DesvioMunicipios AS (
+    SELECT 
+        l.NOM_MUN AS Municipio,
+        ROUND(STDDEV((f.VAL_NOT_NAT + f.VAL_NOT_HUM + f.VAL_NOT_LIN + f.VAL_NOT_MAT + f.VAL_NOT_RED) / 5), 2) AS Desvio_Padrao
+    FROM gold.FAT_DES f
+    JOIN gold.DIM_LOC l ON f.LOC_SRK = l.LOC_SRK
+    WHERE f.IND_PRE_NAT = 1 
+      AND f.IND_PRE_HUM = 1 
+      AND f.IND_PRE_LIN = 1 
+      AND f.IND_PRE_MAT = 1
+    GROUP BY l.NOM_MUN
+    HAVING COUNT(*) > 1
+),
+Top5_Desvio AS (
+    SELECT 'Maior Desvio (Mais Desigual)' AS Categoria, Municipio, Desvio_Padrao
+    FROM DesvioMunicipios
+    ORDER BY Desvio_Padrao DESC
+    LIMIT 5
+),
+Bottom5_Desvio AS (
+    SELECT 'Menor Desvio (Mais Homogêneo)' AS Categoria, Municipio, Desvio_Padrao
+    FROM DesvioMunicipios
+    ORDER BY Desvio_Padrao ASC
+    LIMIT 5
+)
+SELECT * FROM Top5_Desvio
+UNION ALL
+SELECT * FROM Bottom5_Desvio
+ORDER BY Desvio_Padrao DESC;
