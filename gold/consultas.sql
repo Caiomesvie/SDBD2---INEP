@@ -89,7 +89,7 @@ JOIN gold.DIM_PRV p ON f.PRV_SRK = p.PRV_SRK
 GROUP BY p.TIP_LIN
 ORDER BY Total_Candidatos DESC;
 
--- Munincípios com qntd de desistentes
+-- Munincípios com qntd de desistentes VERIFICAR SE PRECISA LIMITAR NO BI
 SELECT 
     l.NOM_MUN AS Municipio,
     COUNT(*) AS Total_Desistentes
