@@ -3,8 +3,8 @@ WITH MediaMunicipios AS (
     SELECT 
         l.NOM_MUN AS Municipio,
         ROUND(AVG((f.VAL_NOT_NAT + f.VAL_NOT_HUM + f.VAL_NOT_LIN + f.VAL_NOT_MAT + f.VAL_NOT_RED) / 5), 2) AS Media_Geral
-    FROM gold.FAT_DES f
-    JOIN gold.DIM_LOC l ON f.LOC_SRK = l.LOC_SRK
+    FROM dw.FAT_DES f
+    JOIN dw.DIM_LOC l ON f.LOC_SRK = l.LOC_SRK
     WHERE f.IND_PRE_NAT = 1 
       AND f.IND_PRE_HUM = 1 
       AND f.IND_PRE_LIN = 1 
@@ -33,7 +33,7 @@ WITH CalculoDesempenho AS (
     SELECT 
         SOC_SRK,
         (VAL_NOT_NAT + VAL_NOT_HUM + VAL_NOT_LIN + VAL_NOT_MAT + VAL_NOT_RED) / 5 AS media_aluno
-    FROM gold.FAT_DES
+    FROM dw.FAT_DES
     WHERE IND_PRE_NAT = 1 
       AND IND_PRE_HUM = 1 
       AND IND_PRE_LIN = 1 
@@ -44,7 +44,7 @@ SELECT
     ROUND(AVG(d.media_aluno), 2) AS Media_Academica_da_Faixa,
     COUNT(*) AS Qtd_Candidatos
 FROM CalculoDesempenho d
-JOIN gold.DIM_SOC s ON d.SOC_SRK = s.SOC_SRK
+JOIN dw.DIM_SOC s ON d.SOC_SRK = s.SOC_SRK
 GROUP BY s.COD_REN_FAM
 ORDER BY s.COD_REN_FAM;
 
@@ -57,7 +57,7 @@ WITH StatusCandidato AS (
             THEN 1 
             ELSE 0 
         END AS foi_faltante
-    FROM gold.FAT_DES
+    FROM dw.FAT_DES
 )
 SELECT 
     s.COD_REN_FAM AS Faixa_Renda,
@@ -68,7 +68,7 @@ SELECT
         2
     ) AS Percentual_Faltantes
 FROM StatusCandidato c
-JOIN gold.DIM_SOC s ON c.SOC_SRK = s.SOC_SRK
+JOIN dw.DIM_SOC s ON c.SOC_SRK = s.SOC_SRK
 GROUP BY s.COD_REN_FAM
 ORDER BY s.COD_REN_FAM;
 
@@ -84,8 +84,8 @@ SELECT
         (COUNT(*) * 100.0) / SUM(COUNT(*)) OVER(), 
         2
     ) AS Percentual_Representatividade
-FROM gold.FAT_DES f
-JOIN gold.DIM_PRV p ON f.PRV_SRK = p.PRV_SRK
+FROM dw.FAT_DES f
+JOIN dw.DIM_PRV p ON f.PRV_SRK = p.PRV_SRK
 GROUP BY p.TIP_LIN
 ORDER BY Total_Candidatos DESC;
 
@@ -93,8 +93,8 @@ ORDER BY Total_Candidatos DESC;
 SELECT 
     l.NOM_MUN AS Municipio,
     COUNT(*) AS Total_Desistentes
-FROM gold.FAT_DES f
-JOIN gold.DIM_LOC l ON f.LOC_SRK = l.LOC_SRK 
+FROM dw.FAT_DES f
+JOIN dw.DIM_LOC l ON f.LOC_SRK = l.LOC_SRK 
 WHERE 
     f.IND_PRE_HUM = 1 AND f.IND_PRE_LIN = 1
     AND 
@@ -105,8 +105,8 @@ WITH NotasEstrangeiros AS (
     SELECT 
         p.COD_NAC,
         (f.VAL_NOT_NAT + f.VAL_NOT_HUM + f.VAL_NOT_LIN + f.VAL_NOT_MAT + f.VAL_NOT_RED) / 5 AS media_aluno
-    FROM gold.FAT_DES f
-    JOIN gold.DIM_PAR p ON f.PAR_SRK = p.PAR_SRK
+    FROM dw.FAT_DES f
+    JOIN dw.DIM_PAR p ON f.PAR_SRK = p.PAR_SRK
     WHERE f.IND_PRE_NAT = 1 
       AND f.IND_PRE_HUM = 1 
       AND f.IND_PRE_LIN = 1 
@@ -131,8 +131,8 @@ WITH CalculoNotasRaca AS (
     SELECT 
         p.COD_COR_RAC,
         (f.VAL_NOT_NAT + f.VAL_NOT_HUM + f.VAL_NOT_LIN + f.VAL_NOT_MAT + f.VAL_NOT_RED) / 5 AS media_candidato
-    FROM gold.FAT_DES f
-    JOIN gold.DIM_PAR p ON f.PAR_SRK = p.PAR_SRK
+    FROM dw.FAT_DES f
+    JOIN dw.DIM_PAR p ON f.PAR_SRK = p.PAR_SRK
     WHERE f.IND_PRE_NAT = 1 
       AND f.IND_PRE_HUM = 1 
       AND f.IND_PRE_LIN = 1 
@@ -159,8 +159,8 @@ WITH NotasInternet AS (
     SELECT 
         s.IND_ACE_INT,
         (f.VAL_NOT_NAT + f.VAL_NOT_HUM + f.VAL_NOT_LIN + f.VAL_NOT_MAT + f.VAL_NOT_RED) / 5 AS media_aluno
-    FROM gold.FAT_DES f
-    JOIN gold.DIM_SOC s ON f.SOC_SRK = s.SOC_SRK
+    FROM dw.FAT_DES f
+    JOIN dw.DIM_SOC s ON f.SOC_SRK = s.SOC_SRK
     WHERE f.IND_PRE_NAT = 1 
       AND f.IND_PRE_HUM = 1 
       AND f.IND_PRE_LIN = 1 
@@ -183,8 +183,8 @@ WITH NotasEscolaridadeMae AS (
     SELECT 
         s.COD_ESC_MAE,
         (f.VAL_NOT_NAT + f.VAL_NOT_HUM + f.VAL_NOT_LIN + f.VAL_NOT_MAT + f.VAL_NOT_RED) / 5 AS media_aluno
-    FROM gold.FAT_DES f
-    JOIN gold.DIM_SOC s ON f.SOC_SRK = s.SOC_SRK
+    FROM dw.FAT_DES f
+    JOIN dw.DIM_SOC s ON f.SOC_SRK = s.SOC_SRK
     WHERE f.IND_PRE_NAT = 1 
       AND f.IND_PRE_HUM = 1 
       AND f.IND_PRE_LIN = 1 
@@ -213,8 +213,8 @@ WITH NotasGenero AS (
     SELECT 
         p.TIP_SEX,
         (f.VAL_NOT_NAT + f.VAL_NOT_HUM + f.VAL_NOT_LIN + f.VAL_NOT_MAT + f.VAL_NOT_RED) / 5 AS media_aluno
-    FROM gold.FAT_DES f
-    JOIN gold.DIM_PAR p ON f.PAR_SRK = p.PAR_SRK
+    FROM dw.FAT_DES f
+    JOIN dw.DIM_PAR p ON f.PAR_SRK = p.PAR_SRK
     WHERE f.IND_PRE_NAT = 1 
       AND f.IND_PRE_HUM = 1 
       AND f.IND_PRE_LIN = 1 
@@ -237,8 +237,8 @@ WITH DesvioMunicipios AS (
     SELECT 
         l.NOM_MUN AS Municipio,
         ROUND(STDDEV((f.VAL_NOT_NAT + f.VAL_NOT_HUM + f.VAL_NOT_LIN + f.VAL_NOT_MAT + f.VAL_NOT_RED) / 5), 2) AS Desvio_Padrao
-    FROM gold.FAT_DES f
-    JOIN gold.DIM_LOC l ON f.LOC_SRK = l.LOC_SRK
+    FROM dw.FAT_DES f
+    JOIN dw.DIM_LOC l ON f.LOC_SRK = l.LOC_SRK
     WHERE f.IND_PRE_NAT = 1 
       AND f.IND_PRE_HUM = 1 
       AND f.IND_PRE_LIN = 1 
