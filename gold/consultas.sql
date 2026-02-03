@@ -233,7 +233,6 @@ GROUP BY TIP_SEX
 ORDER BY Media_Geral DESC;
 
 -- Verifica os 5 municípios com maior desvio padrão
-gabrielBertolazi — 00:38
 SELECT 
     l.NOM_MUN AS Municipio,
     ROUND(AVG((f.VAL_NOT_NAT + f.VAL_NOT_HUM + f.VAL_NOT_LIN + f.VAL_NOT_MAT + f.VAL_NOT_RED) / 5), 2) AS Media_Geral,
