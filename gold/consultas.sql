@@ -304,3 +304,22 @@ INNER JOIN dw.DIM_LOC L ON F.LOC_SRK = L.LOC_SRK
 WHERE F.VAL_NOT_LIN IS NOT NULL
 ORDER BY F.VAL_NOT_LIN DESC
 LIMIT 6;
+
+-- Média por área de todos os municípios
+
+SELECT 
+    L.NOM_MUN,
+    ROUND(AVG(f.VAL_NOT_NAT), 2) AS Media_Natureza,
+    ROUND(AVG(f.VAL_NOT_HUM), 2) AS Media_Humanas,
+    ROUND(AVG(f.VAL_NOT_LIN), 2) AS Media_Linguagens,
+    ROUND(AVG(f.VAL_NOT_MAT), 2) AS Media_Matematica,
+    ROUND(AVG(f.VAL_NOT_RED), 2) AS Media_Redacao,
+    ROUND(AVG((f.VAL_NOT_NAT + f.VAL_NOT_HUM + f.VAL_NOT_LIN + f.VAL_NOT_MAT + f.VAL_NOT_RED) / 5), 2) AS Media_Geral
+FROM dw.FAT_DES f
+JOIN dw.DIM_LOC l ON f.LOC_SRK = l.LOC_SRK
+WHERE f.IND_PRE_NAT = 1 
+  AND f.IND_PRE_HUM = 1 
+  AND f.IND_PRE_LIN = 1 
+  AND f.IND_PRE_MAT = 1
+GROUP BY l.NOM_MUN
+ORDER BY Media_Geral ASC; 
