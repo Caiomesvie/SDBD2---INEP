@@ -246,22 +246,16 @@ WITH DesvioMunicipios AS (
     GROUP BY l.NOM_MUN
     HAVING COUNT(*) > 1
 ),
-Top5_Desvio AS (
-    SELECT 'Maior Desvio (Mais Desigual)' AS Categoria, Municipio, Desvio_Padrao
+Top25_Desvio AS (
+    SELECT 
+        'Maior Desvio (Mais Desigual)' AS Categoria, 
+        Municipio, 
+        Desvio_Padrao
     FROM DesvioMunicipios
     ORDER BY Desvio_Padrao DESC
-    LIMIT 5
-),
-Bottom5_Desvio AS (
-    SELECT 'Menor Desvio (Mais Homogêneo)' AS Categoria, Municipio, Desvio_Padrao
-    FROM DesvioMunicipios
-    ORDER BY Desvio_Padrao ASC
-    LIMIT 5
+    LIMIT 25
 )
-SELECT * FROM Top5_Desvio
-UNION ALL
-SELECT * FROM Bottom5_Desvio
-ORDER BY Desvio_Padrao DESC;
+SELECT * FROM Top25_Desvio;
 
 
 -- Maiores notas por prova e município
