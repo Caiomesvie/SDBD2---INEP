@@ -81,3 +81,21 @@ Siga os passos abaixo para configurar o ambiente e executar os notebooks Jupyter
     ```bash
      deactivate 
      ```
+
+6. ## Cria a pasta de plugins do Docker (se não existir)
+
+    ``` bash
+        mkdir -p ~/.docker/cli-plugins/
+    ```
+
+7. ## Baixa a versão estável mais recente do Docker Compose
+
+    ``` bash
+     curl -SL https://github.com/docker/compose/releases/download/v2.24.5/docker-compose-linux-x86_64 -o ~/.docker/cli-plugins/docker-compose
+     ```
+
+8. ## Dá permissão de execução para o arquivo
+
+    ``` bash
+     chmod +x ~/.docker/cli-plugins/docker-compose
+     ```
