@@ -3,6 +3,7 @@ services:
   db:
     image: postgres:15
     container_name: SDDB2_container
+    shm_size: '2gb'
     environment:
       POSTGRES_USER: admin
       POSTGRES_PASSWORD: l1l2r1r2
