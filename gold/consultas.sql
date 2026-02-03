@@ -266,7 +266,7 @@ ORDER BY Desvio_Padrao DESC;
 
 -- Maiores notas por prova e município
 
-SELECT 
+SELECT DISTINCT
     L.NOM_MUN AS Municipio,
     F.VAL_NOT_MAT AS Nota_Matematica
 FROM dw.FAT_DES F
@@ -276,7 +276,7 @@ ORDER BY F.VAL_NOT_MAT DESC
 LIMIT 6;
 
 
-SELECT 
+SELECT DISTINCT
     L.NOM_MUN AS Municipio,
     F.VAL_NOT_NAT AS Nota_Natureza
 FROM dw.FAT_DES F
@@ -286,7 +286,7 @@ ORDER BY F.VAL_NOT_NAT DESC
 LIMIT 6;
 
 
-SELECT 
+SELECT DISTINCT
     L.NOM_MUN AS Municipio,
     F.VAL_NOT_HUM AS Nota_Humanas
 FROM dw.FAT_DES F
@@ -296,7 +296,7 @@ ORDER BY F.VAL_NOT_HUM DESC
 LIMIT 6;
 
 
-SELECT 
+SELECT DISTINCT
     L.NOM_MUN AS Municipio,
     F.VAL_NOT_LIN AS Nota_Linguagens
 FROM dw.FAT_DES F
