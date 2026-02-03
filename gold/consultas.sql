@@ -265,7 +265,6 @@ ORDER BY Desvio_Padrao DESC;
 
 
 -- Maiores notas por prova e município
-
 SELECT DISTINCT
     L.NOM_MUN AS Municipio,
     F.VAL_NOT_MAT AS Nota_Matematica
@@ -306,7 +305,6 @@ ORDER BY F.VAL_NOT_LIN DESC
 LIMIT 6;
 
 -- Média por área de todos os municípios
-
 SELECT 
     L.NOM_MUN,
     ROUND(AVG(f.VAL_NOT_NAT), 2) AS Media_Natureza,
