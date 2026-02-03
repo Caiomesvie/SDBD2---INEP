@@ -232,31 +232,22 @@ FROM NotasGenero
 GROUP BY TIP_SEX
 ORDER BY Media_Geral DESC;
 
--- Verifica os 5 municípios com maior e menor desvio padrão (Desigualdade de notas)
-WITH DesvioMunicipios AS (
-    SELECT 
-        l.NOM_MUN AS Municipio,
-        ROUND(STDDEV((f.VAL_NOT_NAT + f.VAL_NOT_HUM + f.VAL_NOT_LIN + f.VAL_NOT_MAT + f.VAL_NOT_RED) / 5), 2) AS Desvio_Padrao
-    FROM dw.FAT_DES f
-    JOIN dw.DIM_LOC l ON f.LOC_SRK = l.LOC_SRK
-    WHERE f.IND_PRE_NAT = 1 
-      AND f.IND_PRE_HUM = 1 
-      AND f.IND_PRE_LIN = 1 
-      AND f.IND_PRE_MAT = 1
-    GROUP BY l.NOM_MUN
-    HAVING COUNT(*) > 1
-),
-Top25_Desvio AS (
-    SELECT 
-        'Maior Desvio (Mais Desigual)' AS Categoria, 
-        Municipio, 
-        Desvio_Padrao
-    FROM DesvioMunicipios
-    ORDER BY Desvio_Padrao DESC
-    LIMIT 25
-)
-SELECT * FROM Top25_Desvio;
-
+-- Verifica os 5 municípios com maior desvio padrão
+gabrielBertolazi — 00:38
+SELECT 
+    l.NOM_MUN AS Municipio,
+    ROUND(AVG((f.VAL_NOT_NAT + f.VAL_NOT_HUM + f.VAL_NOT_LIN + f.VAL_NOT_MAT + f.VAL_NOT_RED) / 5), 2) AS Media_Geral,
+    ROUND(STDDEV((f.VAL_NOT_NAT + f.VAL_NOT_HUM + f.VAL_NOT_LIN + f.VAL_NOT_MAT + f.VAL_NOT_RED) / 5), 2) AS Desvio_Padrao
+FROM dw.FAT_DES f
+JOIN dw.DIM_LOC l ON f.LOC_SRK = l.LOC_SRK
+WHERE f.IND_PRE_NAT = 1 
+  AND f.IND_PRE_HUM = 1 
+  AND f.IND_PRE_LIN = 1 
+  AND f.IND_PRE_MAT = 1
+GROUP BY l.NOM_MUN
+HAVING COUNT(*) > 1
+ORDER BY Desvio_Padrao DESC
+LIMIT 25;
 
 -- Maiores notas por prova e município
 SELECT DISTINCT
