@@ -291,23 +291,20 @@ GROUP BY s.COD_REN_FAM
 ORDER BY s.COD_REN_FAM;
 
 -- Contagem de faltas por dias de prova
-SELECT 
-    CASE 
-        WHEN IND_PRE_LIN = 1 AND IND_PRE_MAT = 1 THEN '1. Presente nos dois dias'
-        WHEN IND_PRE_LIN = 1 AND IND_PRE_MAT = 0 THEN '2. Desistente (Veio Dia 1, Faltou Dia 2)'
-        WHEN IND_PRE_LIN = 0 AND IND_PRE_MAT = 1 THEN '3. Atípico (Faltou Dia 1, Veio Dia 2)'
-        WHEN IND_PRE_LIN = 0 AND IND_PRE_MAT = 0 THEN '4. Ausente Total (Faltou os dois dias)'
-    END AS Status_Presenca,
-    COUNT(*) AS Qtd_Candidatos
-FROM dw.FAT_DES
-GROUP BY 
-    CASE 
-        WHEN IND_PRE_LIN = 1 AND IND_PRE_MAT = 1 THEN '1. Presente nos dois dias'
-        WHEN IND_PRE_LIN = 1 AND IND_PRE_MAT = 0 THEN '2. Desistente (Veio Dia 1, Faltou Dia 2)'
-        WHEN IND_PRE_LIN = 0 AND IND_PRE_MAT = 1 THEN '3. Atípico (Faltou Dia 1, Veio Dia 2)'
-        WHEN IND_PRE_LIN = 0 AND IND_PRE_MAT = 0 THEN '4. Ausente Total (Faltou os dois dias)'
-    END
-ORDER BY Status_Presenca;
+SELECT * FROM (
+    SELECT 
+        CASE 
+            WHEN IND_PRE_LIN = 1 AND IND_PRE_MAT = 1 THEN '1. Presente nos dois dias'
+            WHEN IND_PRE_LIN = 1 AND IND_PRE_MAT = 0 THEN '2. Desistente (Veio Dia 1, Faltou Dia 2)'
+            WHEN IND_PRE_LIN = 0 AND IND_PRE_MAT = 1 THEN '3. Atípico (Faltou Dia 1, Veio Dia 2)'
+            WHEN IND_PRE_LIN = 0 AND IND_PRE_MAT = 0 THEN '4. Ausente Total (Faltou os dois dias)'
+        END AS Status_Presenca,
+        COUNT(*) AS Qtd_Candidatos
+    FROM dw.FAT_DES
+    GROUP BY 1
+) subconsulta
+WHERE Status_Presenca IS NOT NULL -- Remove o grupo nulo gerado pelo CASE
+ORDER BY 1;
 
 -- Abstenções por raça e cor
 SELECT 
