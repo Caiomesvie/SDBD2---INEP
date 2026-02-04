@@ -129,6 +129,7 @@ FROM dw.FAT_DES f
 JOIN dw.DIM_PRV p ON f.PRV_SRK = p.PRV_SRK
 WHERE f.IND_PRE_LIN = 1
   AND p.COD_SIT_RED <> 1 
+GROUP BY Situacao_Redacao
 ORDER BY Total_Candidatos DESC;
 
 -- top 10 Municípios com Melhores Médias Exclusivas de Redação
