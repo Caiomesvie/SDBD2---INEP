@@ -312,18 +312,24 @@ ORDER BY Status_Presenca;
 -- Abstenções por raça e cor
 SELECT 
     CASE p.COD_COR_RAC
-        WHEN 0 THEN 'Não declarado'
+        WHEN 0 THEN 'Não Declarado'
         WHEN 1 THEN 'Branca'
         WHEN 2 THEN 'Preta'
         WHEN 3 THEN 'Parda'
         WHEN 4 THEN 'Amarela'
         WHEN 5 THEN 'Indígena'
         ELSE 'Outros'
-    END AS Raca,
+    END AS Raca_Cor,
     COUNT(*) AS Total_Inscritos,
-    ROUND(AVG((VAL_NOT_NAT + VAL_NOT_HUM + VAL_NOT_LIN + VAL_NOT_MAT + VAL_NOT_RED) / 5), 2) AS Media_Geral
+    SUM(CASE 
+        WHEN f.IND_PRE_LIN = 0 OR f.IND_PRE_MAT = 0 THEN 1 
+        ELSE 0 
+    END) AS Qtd_Faltantes,
+    ROUND(
+        (SUM(CASE WHEN f.IND_PRE_LIN = 0 OR f.IND_PRE_MAT = 0 THEN 1 ELSE 0 END) * 100.0) 
+        / COUNT(*), 
+    2) AS Taxa_Abstencao_Percentual
 FROM dw.FAT_DES f
 JOIN dw.DIM_PAR p ON f.PAR_SRK = p.PAR_SRK
-WHERE f.IND_PRE_NAT = 1 
 GROUP BY p.COD_COR_RAC
-ORDER BY Media_Geral DESC;
+ORDER BY Taxa_Abstencao_Percentual DESC; 
