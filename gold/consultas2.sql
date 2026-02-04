@@ -90,25 +90,27 @@ GROUP BY p.TIP_LIN
 ORDER BY Total_Candidatos DESC;
 
 -- distribuição de Notas da Redação 
-WITH FaixasRedacao AS (
+ITH FaixasRedacao AS (
     SELECT 
         CASE 
-            WHEN VAL_NOT_RED = 0 THEN '0. Zerou'
-            WHEN VAL_NOT_RED BETWEEN 1 AND 200 THEN '1. Muito Baixa (1-200)'
-            WHEN VAL_NOT_RED BETWEEN 201 AND 400 THEN '2. Baixa (201-400)'
-            WHEN VAL_NOT_RED BETWEEN 401 AND 600 THEN '3. Média (401-600)'
-            WHEN VAL_NOT_RED BETWEEN 601 AND 800 THEN '4. Boa (601-800)'
-            WHEN VAL_NOT_RED BETWEEN 801 AND 999 THEN '5. Muito Boa (801-999)'
-            WHEN VAL_NOT_RED = 1000 THEN '6. Nota Mil (1000)'
+            WHEN f.VAL_NOT_RED = 0 THEN '0. Zerou'
+            WHEN f.VAL_NOT_RED BETWEEN 1 AND 200 THEN '1. Muito Baixa (1-200)'
+            WHEN f.VAL_NOT_RED BETWEEN 201 AND 400 THEN '2. Baixa (201-400)'
+            WHEN f.VAL_NOT_RED BETWEEN 401 AND 600 THEN '3. Média (401-600)'
+            WHEN f.VAL_NOT_RED BETWEEN 601 AND 800 THEN '4. Boa (601-800)'
+            WHEN f.VAL_NOT_RED BETWEEN 801 AND 999 THEN '5. Muito Boa (801-999)'
+            WHEN f.VAL_NOT_RED = 1000 THEN '6. Nota Mil (1000)'
         END AS Faixa_Nota
-    FROM dw.FAT_DES
-    WHERE IND_PRE_LIN = 1 
-      AND VAL_NOT_RED IS NOT NULL
+    FROM dw.FAT_DES f
+    JOIN dw.DIM_PRV p ON f.PRV_SRK = p.PRV_SRK
+    WHERE f.IND_PRE_LIN = 1 
+      AND f.VAL_NOT_RED IS NOT NULL
 )
 SELECT 
     Faixa_Nota, 
     COUNT(*) AS Qtd_Candidatos
 FROM FaixasRedacao
+WHERE Faixa_Nota IS NOT NULL 
 GROUP BY Faixa_Nota
 ORDER BY Faixa_Nota;
 
@@ -141,7 +143,7 @@ JOIN dw.DIM_LOC l ON f.LOC_SRK = l.LOC_SRK
 WHERE f.IND_PRE_LIN = 1 
   AND f.VAL_NOT_RED > 0
 GROUP BY l.NOM_MUN
-HAVING COUNT(*) > 50 -- para evitar municípios com pouco inscritos distorcerem a média
+HAVING COUNT(*) > 50 
 ORDER BY Media_Redacao DESC
 LIMIT 10;
 
@@ -187,7 +189,7 @@ WITH PerfilTecnologico AS (
         (VAL_NOT_NAT + VAL_NOT_HUM + VAL_NOT_LIN + VAL_NOT_MAT + VAL_NOT_RED) / 5 AS Nota_Media
     FROM dw.FAT_DES f
     JOIN dw.DIM_SOC s ON f.SOC_SRK = s.SOC_SRK
-    WHERE IND_PRE_NAT = 1 AND IND_PRE_HUM = 1 -- Filtra apenas presentes
+    WHERE IND_PRE_NAT = 1 AND IND_PRE_HUM = 1 
 )
 SELECT 
     Status_Digital,
@@ -250,7 +252,6 @@ ORDER BY Percentual_Faltantes DESC;
 WITH StatusCandidato AS (
     SELECT 
         SOC_SRK,
-        -- Se faltou em QUALQUER prova, consideramos abstencão/falta
         CASE 
             WHEN IND_PRE_NAT = 0 OR IND_PRE_HUM = 0 OR IND_PRE_LIN = 0 OR IND_PRE_MAT = 0 
             THEN 1 
@@ -294,16 +295,17 @@ ORDER BY s.COD_REN_FAM;
 SELECT * FROM (
     SELECT 
         CASE 
-            WHEN IND_PRE_LIN = 1 AND IND_PRE_MAT = 1 THEN '1. Presente nos dois dias'
-            WHEN IND_PRE_LIN = 1 AND IND_PRE_MAT = 0 THEN '2. Desistente (Veio Dia 1, Faltou Dia 2)'
-            WHEN IND_PRE_LIN = 0 AND IND_PRE_MAT = 1 THEN '3. Atípico (Faltou Dia 1, Veio Dia 2)'
-            WHEN IND_PRE_LIN = 0 AND IND_PRE_MAT = 0 THEN '4. Ausente Total (Faltou os dois dias)'
+            WHEN f.IND_PRE_LIN = 1 AND f.IND_PRE_MAT = 1 THEN '1. Presente nos dois dias'
+            WHEN f.IND_PRE_LIN = 1 AND f.IND_PRE_MAT = 0 THEN '2. Desistente (Veio Dia 1, Faltou Dia 2)'
+            WHEN f.IND_PRE_LIN = 0 AND f.IND_PRE_MAT = 1 THEN '3. Atípico (Faltou Dia 1, Veio Dia 2)'
+            WHEN f.IND_PRE_LIN = 0 AND f.IND_PRE_MAT = 0 THEN '4. Ausente Total (Faltou os dois dias)'
         END AS Status_Presenca,
         COUNT(*) AS Qtd_Candidatos
-    FROM dw.FAT_DES
+    FROM dw.FAT_DES f
+    JOIN dw.DIM_PAR p ON f.PAR_SRK = p.PAR_SRK 
     GROUP BY 1
 ) subconsulta
-WHERE Status_Presenca IS NOT NULL -- Remove o grupo nulo gerado pelo CASE
+WHERE Status_Presenca IS NOT NULL
 ORDER BY 1;
 
 -- Abstenções por raça e cor
