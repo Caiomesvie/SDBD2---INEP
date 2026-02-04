@@ -232,7 +232,6 @@ WITH StatusCandidato AS (
 )
 SELECT 
     CASE 
-        /* 'A' significa 'Não' no dicionário para Q010 e Q011 */
         WHEN s.POS_CAR <> 'A' OR s.POS_MOT <> 'A' THEN 'Possui Mobilidade (Carro/Moto)'
         ELSE 'Não Possui Mobilidade Própria'
     END AS Status_Mobilidade,
