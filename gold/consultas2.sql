@@ -132,7 +132,7 @@ WHERE f.IND_PRE_LIN = 1
 GROUP BY Situacao_Redacao
 ORDER BY Total_Candidatos DESC;
 
--- top 10 Municípios com Melhores Médias Exclusivas de Redação
+-- top 10 Municípios com melhores médias exclusivas de redação
 SELECT 
     l.NOM_MUN AS Municipio,
     ROUND(AVG(f.VAL_NOT_RED), 2) AS Media_Redacao
@@ -144,3 +144,76 @@ GROUP BY l.NOM_MUN
 HAVING COUNT(*) > 50 -- para evitar municípios com pouco inscritos distorcerem a média
 ORDER BY Media_Redacao DESC
 LIMIT 10;
+
+-- desempenho de notas por faixa de renda declarada
+SELECT 
+    CASE s.COD_REN_FAM
+        WHEN 'A' THEN '01. Nenhuma Renda'
+        WHEN 'B' THEN '02. Até R$ 1.100'
+        WHEN 'C' THEN '03. R$ 1.100 - 1.650'
+        WHEN 'D' THEN '04. R$ 1.650 - 2.200'
+        WHEN 'E' THEN '05. R$ 2.200 - 2.750'
+        WHEN 'F' THEN '06. R$ 2.750 - 3.300'
+        WHEN 'G' THEN '07. R$ 3.300 - 4.400'
+        WHEN 'H' THEN '08. R$ 4.400 - 5.500'
+        WHEN 'I' THEN '09. R$ 5.500 - 6.600'
+        WHEN 'J' THEN '10. R$ 6.600 - 7.700'
+        WHEN 'K' THEN '11. R$ 7.700 - 8.800'
+        WHEN 'L' THEN '12. R$ 8.800 - 9.900'
+        WHEN 'M' THEN '13. R$ 9.900 - 11.000'
+        WHEN 'N' THEN '14. R$ 11.000 - 13.200'
+        WHEN 'O' THEN '15. R$ 13.200 - 16.500'
+        WHEN 'P' THEN '16. R$ 16.500 - 22.000'
+        WHEN 'Q' THEN '17. Acima de R$ 22.000'
+        ELSE '18. Não Declarado'
+    END AS Faixa_Renda,
+    ROUND(AVG((VAL_NOT_NAT + VAL_NOT_HUM + VAL_NOT_LIN + VAL_NOT_MAT + VAL_NOT_RED) / 5), 2) AS Media_Geral,
+    COUNT(*) AS Qtd_Candidatos
+FROM dw.FAT_DES f
+JOIN dw.DIM_SOC s ON f.SOC_SRK = s.SOC_SRK
+WHERE IND_PRE_NAT = 1 AND IND_PRE_HUM = 1 AND IND_PRE_LIN = 1 AND IND_PRE_MAT = 1
+GROUP BY s.COD_REN_FAM
+ORDER BY s.COD_REN_FAM;
+
+-- Perfil digital dos participantes
+WITH PerfilTecnologico AS (
+    SELECT 
+        CASE 
+            WHEN IND_ACE_INT = 'B' AND (COD_POS_COM = 'B' OR COD_POS_COM = 'C' OR COD_POS_COM = 'D' OR COD_POS_COM = 'E') THEN '1. Conectado (Internet + PC)'
+            WHEN IND_ACE_INT = 'B' AND COD_POS_COM = 'A' THEN '2. Acesso Limitado (Só Internet, Sem PC)'
+            WHEN IND_ACE_INT = 'A' AND (COD_POS_COM = 'B' OR COD_POS_COM = 'C' OR COD_POS_COM = 'D' OR COD_POS_COM = 'E') THEN '3. Offline com PC (Raro)'
+            ELSE '4. Excluído Digital (Sem Internet, Sem PC)'
+        END AS Status_Digital,
+        (VAL_NOT_NAT + VAL_NOT_HUM + VAL_NOT_LIN + VAL_NOT_MAT + VAL_NOT_RED) / 5 AS Nota_Media
+    FROM dw.FAT_DES f
+    JOIN dw.DIM_SOC s ON f.SOC_SRK = s.SOC_SRK
+    WHERE IND_PRE_NAT = 1 AND IND_PRE_HUM = 1 -- Filtra apenas presentes
+)
+SELECT 
+    Status_Digital,
+    ROUND(AVG(Nota_Media), 2) AS Media_Geral,
+    COUNT(*) AS Total
+FROM PerfilTecnologico
+GROUP BY Status_Digital
+ORDER BY Media_Geral DESC;
+
+-- influencia da mobilidade nas notas 
+SELECT 
+    CASE 
+        WHEN COD_POS_CAR <> 'A' AND COD_POS_MOT <> 'A' THEN 'Carro e Moto'
+        WHEN COD_POS_CAR <> 'A' THEN 'Só Carro'
+        WHEN COD_POS_MOT <> 'A' THEN 'Só Moto'
+        ELSE 'Sem Veículo'
+    END AS Perfil_Transporte,
+    ROUND(AVG((VAL_NOT_NAT + VAL_NOT_HUM + VAL_NOT_LIN + VAL_NOT_MAT + VAL_NOT_RED) / 5), 2) AS Media_Geral
+FROM dw.FAT_DES f
+JOIN dw.DIM_SOC s ON f.SOC_SRK = s.SOC_SRK
+WHERE IND_PRE_NAT = 1
+GROUP BY 
+    CASE 
+        WHEN COD_POS_CAR <> 'A' AND COD_POS_MOT <> 'A' THEN 'Carro e Moto'
+        WHEN COD_POS_CAR <> 'A' THEN 'Só Carro'
+        WHEN COD_POS_MOT <> 'A' THEN 'Só Moto'
+        ELSE 'Sem Veículo'
+    END
+ORDER BY Media_Geral DESC;
