@@ -250,6 +250,7 @@ ORDER BY Percentual_Faltantes DESC;
 WITH StatusCandidato AS (
     SELECT 
         SOC_SRK,
+        -- Se faltou em QUALQUER prova, consideramos abstencão/falta
         CASE 
             WHEN IND_PRE_NAT = 0 OR IND_PRE_HUM = 0 OR IND_PRE_LIN = 0 OR IND_PRE_MAT = 0 
             THEN 1 
@@ -258,7 +259,26 @@ WITH StatusCandidato AS (
     FROM dw.FAT_DES
 )
 SELECT 
-    s.COD_REN_FAM AS Faixa_Renda,
+    CASE s.COD_REN_FAM
+        WHEN 'A' THEN '01. Nenhuma Renda'
+        WHEN 'B' THEN '02. Até R$ 1.100'
+        WHEN 'C' THEN '03. R$ 1.100 - 1.650'
+        WHEN 'D' THEN '04. R$ 1.650 - 2.200'
+        WHEN 'E' THEN '05. R$ 2.200 - 2.750'
+        WHEN 'F' THEN '06. R$ 2.750 - 3.300'
+        WHEN 'G' THEN '07. R$ 3.300 - 4.400'
+        WHEN 'H' THEN '08. R$ 4.400 - 5.500'
+        WHEN 'I' THEN '09. R$ 5.500 - 6.600'
+        WHEN 'J' THEN '10. R$ 6.600 - 7.700'
+        WHEN 'K' THEN '11. R$ 7.700 - 8.800'
+        WHEN 'L' THEN '12. R$ 8.800 - 9.900'
+        WHEN 'M' THEN '13. R$ 9.900 - 11.000'
+        WHEN 'N' THEN '14. R$ 11.000 - 13.200'
+        WHEN 'O' THEN '15. R$ 13.200 - 16.500'
+        WHEN 'P' THEN '16. R$ 16.500 - 22.000'
+        WHEN 'Q' THEN '17. Acima de R$ 22.000'
+        ELSE '18. Não Declarado'
+    END AS Faixa_Renda_Descritiva,
     COUNT(*) AS Total_Inscritos,
     SUM(c.foi_faltante) AS Qtd_Faltantes,
     ROUND(
