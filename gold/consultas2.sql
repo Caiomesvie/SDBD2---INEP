@@ -113,10 +113,8 @@ GROUP BY Faixa_Nota
 ORDER BY Faixa_Nota;
 
 -- análise dos Motivos de Nota Zero ou Problemas na Redação
-
 SELECT 
     CASE p.COD_SIT_RED
-        WHEN 1 THEN 'Sem problemas'
         WHEN 2 THEN 'Anulada'
         WHEN 3 THEN 'Cópia Texto Motivador'
         WHEN 4 THEN 'Em Branco'
@@ -124,13 +122,13 @@ SELECT
         WHEN 7 THEN 'Não atendimento ao tipo textual'
         WHEN 8 THEN 'Texto insuficiente'
         WHEN 9 THEN 'Parte desconectada'
-        ELSE 'Outros'
+        ELSE 'Outros Motivos'
     END AS Situacao_Redacao,
     COUNT(*) AS Total_Candidatos
 FROM dw.FAT_DES f
 JOIN dw.DIM_PRV p ON f.PRV_SRK = p.PRV_SRK
-WHERE f.IND_PRE_LIN = 1 
-GROUP BY p.COD_SIT_RED
+WHERE f.IND_PRE_LIN = 1
+  AND p.COD_SIT_RED <> 1 
 ORDER BY Total_Candidatos DESC;
 
 -- top 10 Municípios com Melhores Médias Exclusivas de Redação
