@@ -269,3 +269,41 @@ FROM StatusCandidato c
 JOIN dw.DIM_SOC s ON c.SOC_SRK = s.SOC_SRK
 GROUP BY s.COD_REN_FAM
 ORDER BY s.COD_REN_FAM;
+
+-- Contagem de faltas por dias de prova
+SELECT 
+    CASE 
+        WHEN IND_PRE_LIN = 1 AND IND_PRE_MAT = 1 THEN '1. Presente nos dois dias'
+        WHEN IND_PRE_LIN = 1 AND IND_PRE_MAT = 0 THEN '2. Desistente (Veio Dia 1, Faltou Dia 2)'
+        WHEN IND_PRE_LIN = 0 AND IND_PRE_MAT = 1 THEN '3. Atípico (Faltou Dia 1, Veio Dia 2)'
+        WHEN IND_PRE_LIN = 0 AND IND_PRE_MAT = 0 THEN '4. Ausente Total (Faltou os dois dias)'
+    END AS Status_Presenca,
+    COUNT(*) AS Qtd_Candidatos
+FROM dw.FAT_DES
+GROUP BY 
+    CASE 
+        WHEN IND_PRE_LIN = 1 AND IND_PRE_MAT = 1 THEN '1. Presente nos dois dias'
+        WHEN IND_PRE_LIN = 1 AND IND_PRE_MAT = 0 THEN '2. Desistente (Veio Dia 1, Faltou Dia 2)'
+        WHEN IND_PRE_LIN = 0 AND IND_PRE_MAT = 1 THEN '3. Atípico (Faltou Dia 1, Veio Dia 2)'
+        WHEN IND_PRE_LIN = 0 AND IND_PRE_MAT = 0 THEN '4. Ausente Total (Faltou os dois dias)'
+    END
+ORDER BY Status_Presenca;
+
+-- Abstenções por raça e cor
+SELECT 
+    CASE p.COD_COR_RAC
+        WHEN 0 THEN 'Não declarado'
+        WHEN 1 THEN 'Branca'
+        WHEN 2 THEN 'Preta'
+        WHEN 3 THEN 'Parda'
+        WHEN 4 THEN 'Amarela'
+        WHEN 5 THEN 'Indígena'
+        ELSE 'Outros'
+    END AS Raca,
+    COUNT(*) AS Total_Inscritos,
+    ROUND(AVG((VAL_NOT_NAT + VAL_NOT_HUM + VAL_NOT_LIN + VAL_NOT_MAT + VAL_NOT_RED) / 5), 2) AS Media_Geral
+FROM dw.FAT_DES f
+JOIN dw.DIM_PAR p ON f.PAR_SRK = p.PAR_SRK
+WHERE f.IND_PRE_NAT = 1 
+GROUP BY p.COD_COR_RAC
+ORDER BY Media_Geral DESC;
