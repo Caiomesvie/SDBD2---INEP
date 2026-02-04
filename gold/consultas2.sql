@@ -217,3 +217,36 @@ GROUP BY
         ELSE 'Sem Veículo'
     END
 ORDER BY Media_Geral DESC;
+
+-- Influencia da mobilidade nas faltas
+
+WITH StatusCandidato AS (
+    SELECT 
+        SOC_SRK,
+        CASE 
+            WHEN IND_PRE_NAT = 0 OR IND_PRE_HUM = 0 OR IND_PRE_LIN = 0 OR IND_PRE_MAT = 0 
+            THEN 1 
+            ELSE 0 
+        END AS foi_faltante
+    FROM dw.FAT_DES
+)
+SELECT 
+    CASE 
+        /* 'A' significa 'Não' no dicionário para Q010 e Q011 */
+        WHEN s.POS_CAR <> 'A' OR s.POS_MOT <> 'A' THEN 'Possui Mobilidade (Carro/Moto)'
+        ELSE 'Não Possui Mobilidade Própria'
+    END AS Status_Mobilidade,
+    COUNT(*) AS Total_Inscritos,
+    SUM(c.foi_faltante) AS Qtd_Faltantes,
+    ROUND(
+        (SUM(c.foi_faltante) * 100.0) / COUNT(*), 
+        2
+    ) AS Percentual_Faltantes
+FROM StatusCandidato c
+JOIN dw.DIM_SOC s ON c.SOC_SRK = s.SOC_SRK
+GROUP BY 
+    CASE 
+        WHEN s.POS_CAR <> 'A' OR s.POS_MOT <> 'A' THEN 'Possui Mobilidade (Carro/Moto)'
+        ELSE 'Não Possui Mobilidade Própria'
+    END
+ORDER BY Percentual_Faltantes DESC;
