@@ -232,20 +232,16 @@ WITH StatusCandidato AS (
 )
 SELECT 
     CASE 
-        WHEN s.POS_CAR <> 'A' OR s.POS_MOT <> 'A' THEN 'Possui Mobilidade (Carro/Moto)'
+        WHEN s.COD_POS_CAR <> 'A' OR s.COD_POS_MOT <> 'A' THEN 'Possui Mobilidade (Carro/Moto)'
         ELSE 'Não Possui Mobilidade Própria'
     END AS Status_Mobilidade,
     COUNT(*) AS Total_Inscritos,
     SUM(c.foi_faltante) AS Qtd_Faltantes,
     ROUND(
-        (SUM(c.foi_faltante) * 100.0) / COUNT(*), 
+        (SUM(c.foi_faltante) * 100.0) / NULLIF(COUNT(*), 0), 
         2
     ) AS Percentual_Faltantes
 FROM StatusCandidato c
 JOIN dw.DIM_SOC s ON c.SOC_SRK = s.SOC_SRK
-GROUP BY 
-    CASE 
-        WHEN s.POS_CAR <> 'A' OR s.POS_MOT <> 'A' THEN 'Possui Mobilidade (Carro/Moto)'
-        ELSE 'Não Possui Mobilidade Própria'
-    END
+GROUP BY 1
 ORDER BY Percentual_Faltantes DESC;
