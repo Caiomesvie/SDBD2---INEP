@@ -221,7 +221,6 @@ GROUP BY
 ORDER BY Media_Geral DESC;
 
 -- Influencia da mobilidade nas faltas
-
 WITH StatusCandidato AS (
     SELECT 
         SOC_SRK,
