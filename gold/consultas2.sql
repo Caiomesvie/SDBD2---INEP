@@ -1,4 +1,4 @@
--- Média por área de todos os municípios
+-- media por area de todos os municipios
 SELECT 
     L.NOM_MUN,
     ROUND(AVG(f.VAL_NOT_NAT), 2) AS Media_Natureza,
@@ -16,7 +16,7 @@ WHERE f.IND_PRE_NAT = 1
 GROUP BY l.NOM_MUN
 ORDER BY Media_Geral ASC; 
 
--- Verifica os 5 municípios com maior desvio padrão
+-- verifica os 5 municípios com maior desvio padrão
 SELECT 
     l.NOM_MUN AS Municipio,
     ROUND(AVG((f.VAL_NOT_NAT + f.VAL_NOT_HUM + f.VAL_NOT_LIN + f.VAL_NOT_MAT + f.VAL_NOT_RED) / 5), 2) AS Media_Geral,
@@ -32,7 +32,7 @@ HAVING COUNT(*) > 1
 ORDER BY Desvio_Padrao DESC
 LIMIT 25;
 
--- Maiores notas por prova e município
+-- maiores notas por prova e município
 SELECT DISTINCT
     L.NOM_MUN AS Municipio,
     F.VAL_NOT_MAT AS Nota_Matematica
@@ -72,7 +72,7 @@ WHERE F.VAL_NOT_LIN IS NOT NULL
 ORDER BY F.VAL_NOT_LIN DESC
 LIMIT 6;
 
--- Divisão de pessoas que escolheram linguagens
+-- divisão de pessoas que escolheram linguagens
 SELECT 
     CASE p.TIP_LIN 
         WHEN 0 THEN 'Inglês'
@@ -89,7 +89,7 @@ JOIN dw.DIM_PRV p ON f.PRV_SRK = p.PRV_SRK
 GROUP BY p.TIP_LIN
 ORDER BY Total_Candidatos DESC;
 
--- Distribuição de Notas da Redação 
+-- distribuição de Notas da Redação 
 WITH FaixasRedacao AS (
     SELECT 
         CASE 
@@ -112,7 +112,7 @@ FROM FaixasRedacao
 GROUP BY Faixa_Nota
 ORDER BY Faixa_Nota;
 
--- Análise dos Motivos de Nota Zero ou Problemas na Redação
+-- análise dos Motivos de Nota Zero ou Problemas na Redação
 
 SELECT 
     CASE p.COD_SIT_RED
@@ -132,3 +132,16 @@ JOIN dw.DIM_PRV p ON f.PRV_SRK = p.PRV_SRK
 WHERE f.IND_PRE_LIN = 1 
 GROUP BY p.COD_SIT_RED
 ORDER BY Total_Candidatos DESC;
+
+-- top 10 Municípios com Melhores Médias Exclusivas de Redação
+SELECT 
+    l.NOM_MUN AS Municipio,
+    ROUND(AVG(f.VAL_NOT_RED), 2) AS Media_Redacao
+FROM dw.FAT_DES f
+JOIN dw.DIM_LOC l ON f.LOC_SRK = l.LOC_SRK
+WHERE f.IND_PRE_LIN = 1 
+  AND f.VAL_NOT_RED > 0
+GROUP BY l.NOM_MUN
+HAVING COUNT(*) > 50 -- para evitar municípios com pouco inscritos distorcerem a média
+ORDER BY Media_Redacao DESC
+LIMIT 10;
