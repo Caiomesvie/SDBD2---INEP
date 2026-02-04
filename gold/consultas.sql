@@ -1,238 +1,22 @@
--- Verifica os 5 melhores e 5 piores munincípios levando em conta desempenho
-WITH MediaMunicipios AS (
-    SELECT 
-        l.NOM_MUN AS Municipio,
-        ROUND(AVG((f.VAL_NOT_NAT + f.VAL_NOT_HUM + f.VAL_NOT_LIN + f.VAL_NOT_MAT + f.VAL_NOT_RED) / 5), 2) AS Media_Geral
-    FROM dw.FAT_DES f
-    JOIN dw.DIM_LOC l ON f.LOC_SRK = l.LOC_SRK
-    WHERE f.IND_PRE_NAT = 1 
-      AND f.IND_PRE_HUM = 1 
-      AND f.IND_PRE_LIN = 1 
-      AND f.IND_PRE_MAT = 1
-    GROUP BY l.NOM_MUN
-),
-Top5 AS (
-    SELECT 'Melhores Desempenhos' AS Categoria, Municipio, Media_Geral
-    FROM MediaMunicipios
-    ORDER BY Media_Geral DESC
-    LIMIT 5
-),
-Bottom5 AS (
-    SELECT 'Piores Desempenhos' AS Categoria, Municipio, Media_Geral
-    FROM MediaMunicipios
-    ORDER BY Media_Geral ASC
-    LIMIT 5
-)
-SELECT * FROM Top5
-UNION ALL
-SELECT * FROM Bottom5
-ORDER BY Media_Geral DESC;
-
--- CTE (1) = Faz uma relação da faixa de renda familiar com a média da nota do ENEM com a qtd de pessoas nessa faixa 
-WITH CalculoDesempenho AS (
-    SELECT 
-        SOC_SRK,
-        (VAL_NOT_NAT + VAL_NOT_HUM + VAL_NOT_LIN + VAL_NOT_MAT + VAL_NOT_RED) / 5 AS media_aluno
-    FROM dw.FAT_DES
-    WHERE IND_PRE_NAT = 1 
-      AND IND_PRE_HUM = 1 
-      AND IND_PRE_LIN = 1 
-      AND IND_PRE_MAT = 1
-)
+-- media por area de todos os municipios
 SELECT 
-    s.COD_REN_FAM AS Faixa_Renda,
-    ROUND(AVG(d.media_aluno), 2) AS Media_Academica_da_Faixa,
-    COUNT(*) AS Qtd_Candidatos
-FROM CalculoDesempenho d
-JOIN dw.DIM_SOC s ON d.SOC_SRK = s.SOC_SRK
-GROUP BY s.COD_REN_FAM
-ORDER BY s.COD_REN_FAM;
-
--- CTE(2) = Mostra faixa de renda familiar, os inscritos nessa faixa, quantos faltantes e o percentual de faltantes
-WITH StatusCandidato AS (
-    SELECT 
-        SOC_SRK,
-        CASE 
-            WHEN IND_PRE_NAT = 0 OR IND_PRE_HUM = 0 OR IND_PRE_LIN = 0 OR IND_PRE_MAT = 0 
-            THEN 1 
-            ELSE 0 
-        END AS foi_faltante
-    FROM dw.FAT_DES
-)
-SELECT 
-    s.COD_REN_FAM AS Faixa_Renda,
-    COUNT(*) AS Total_Inscritos,
-    SUM(c.foi_faltante) AS Qtd_Faltantes,
-    ROUND(
-        (SUM(c.foi_faltante) * 100.0) / COUNT(*), 
-        2
-    ) AS Percentual_Faltantes
-FROM StatusCandidato c
-JOIN dw.DIM_SOC s ON c.SOC_SRK = s.SOC_SRK
-GROUP BY s.COD_REN_FAM
-ORDER BY s.COD_REN_FAM;
-
--- Divisão de pessoas que escolheram linguagens
-SELECT 
-    CASE p.TIP_LIN 
-        WHEN 0 THEN 'Inglês'
-        WHEN 1 THEN 'Espanhol'
-        ELSE 'Não Informado'
-    END AS Lingua_Estrangeira,
-    COUNT(*) AS Total_Candidatos,
-    ROUND(
-        (COUNT(*) * 100.0) / SUM(COUNT(*)) OVER(), 
-        2
-    ) AS Percentual_Representatividade
+    L.NOM_MUN,
+    ROUND(AVG(f.VAL_NOT_NAT), 2) AS Media_Natureza,
+    ROUND(AVG(f.VAL_NOT_HUM), 2) AS Media_Humanas,
+    ROUND(AVG(f.VAL_NOT_LIN), 2) AS Media_Linguagens,
+    ROUND(AVG(f.VAL_NOT_MAT), 2) AS Media_Matematica,
+    ROUND(AVG(f.VAL_NOT_RED), 2) AS Media_Redacao,
+    ROUND(AVG((f.VAL_NOT_NAT + f.VAL_NOT_HUM + f.VAL_NOT_LIN + f.VAL_NOT_MAT + f.VAL_NOT_RED) / 5), 2) AS Media_Geral
 FROM dw.FAT_DES f
-JOIN dw.DIM_PRV p ON f.PRV_SRK = p.PRV_SRK
-GROUP BY p.TIP_LIN
-ORDER BY Total_Candidatos DESC;
-
--- Munincípios com qntd de desistentes VERIFICAR SE PRECISA LIMITAR NO BI
-SELECT 
-    l.NOM_MUN AS Municipio,
-    COUNT(*) AS Total_Desistentes
-FROM dw.FAT_DES f
-JOIN dw.DIM_LOC l ON f.LOC_SRK = l.LOC_SRK 
-WHERE 
-    f.IND_PRE_HUM = 1 AND f.IND_PRE_LIN = 1
-    AND 
-    (f.IND_PRE_NAT = 0 OR f.IND_PRE_MAT = 0)
+JOIN dw.DIM_LOC l ON f.LOC_SRK = l.LOC_SRK
+WHERE f.IND_PRE_NAT = 1 
+  AND f.IND_PRE_HUM = 1 
+  AND f.IND_PRE_LIN = 1 
+  AND f.IND_PRE_MAT = 1
 GROUP BY l.NOM_MUN
-ORDER BY Total_Desistentes DESC;
-WITH NotasEstrangeiros AS (
-    SELECT 
-        p.COD_NAC,
-        (f.VAL_NOT_NAT + f.VAL_NOT_HUM + f.VAL_NOT_LIN + f.VAL_NOT_MAT + f.VAL_NOT_RED) / 5 AS media_aluno
-    FROM dw.FAT_DES f
-    JOIN dw.DIM_PAR p ON f.PAR_SRK = p.PAR_SRK
-    WHERE f.IND_PRE_NAT = 1 
-      AND f.IND_PRE_HUM = 1 
-      AND f.IND_PRE_LIN = 1 
-      AND f.IND_PRE_MAT = 1
-)
-SELECT 
-    CASE n.COD_NAC
-        WHEN 3 THEN 'Estrangeiro'
-        WHEN 1 THEN 'Brasileiro Nato'
-        WHEN 2 THEN 'Brasileiro Naturalizado'
-        WHEN 4 THEN 'Brasileiro Nascido no Exterior'
-        ELSE 'Não Informado'
-    END AS Nacionalidade,
-    COUNT(*) AS Qtd_Candidatos,
-    ROUND(AVG(n.media_aluno), 2) AS Media_Academica
-FROM NotasEstrangeiros n
-GROUP BY n.COD_NAC
-ORDER BY Media_Academica DESC;
+ORDER BY Media_Geral ASC; 
 
--- Desempenho por raça
-WITH CalculoNotasRaca AS (
-    SELECT 
-        p.COD_COR_RAC,
-        (f.VAL_NOT_NAT + f.VAL_NOT_HUM + f.VAL_NOT_LIN + f.VAL_NOT_MAT + f.VAL_NOT_RED) / 5 AS media_candidato
-    FROM dw.FAT_DES f
-    JOIN dw.DIM_PAR p ON f.PAR_SRK = p.PAR_SRK
-    WHERE f.IND_PRE_NAT = 1 
-      AND f.IND_PRE_HUM = 1 
-      AND f.IND_PRE_LIN = 1 
-      AND f.IND_PRE_MAT = 1
-)
-SELECT 
-    CASE c.COD_COR_RAC
-        WHEN 0 THEN 'Não declarado'
-        WHEN 1 THEN 'Branca'
-        WHEN 2 THEN 'Preta'
-        WHEN 3 THEN 'Parda'
-        WHEN 4 THEN 'Amarela'
-        WHEN 5 THEN 'Indígena'
-        ELSE 'Outros/Nulo'
-    END AS Cor_Raca,
-    COUNT(*) AS Total_Candidatos,
-    ROUND(AVG(c.media_candidato), 2) AS Media_Geral_Enem
-FROM CalculoNotasRaca c
-GROUP BY c.COD_COR_RAC
-ORDER BY Media_Geral_Enem DESC;
-
--- Impacto do acesso à internet no desempenho médio
-WITH NotasInternet AS (
-    SELECT 
-        s.IND_ACE_INT,
-        (f.VAL_NOT_NAT + f.VAL_NOT_HUM + f.VAL_NOT_LIN + f.VAL_NOT_MAT + f.VAL_NOT_RED) / 5 AS media_aluno
-    FROM dw.FAT_DES f
-    JOIN dw.DIM_SOC s ON f.SOC_SRK = s.SOC_SRK
-    WHERE f.IND_PRE_NAT = 1 
-      AND f.IND_PRE_HUM = 1 
-      AND f.IND_PRE_LIN = 1 
-      AND f.IND_PRE_MAT = 1
-)
-SELECT 
-    CASE IND_ACE_INT
-        WHEN 'A' THEN 'Não Possui'
-        WHEN 'B' THEN 'Possui'
-        ELSE 'Não Informado'
-    END AS Acesso_Internet,
-    COUNT(*) AS Qtd_Candidatos,
-    ROUND(AVG(media_aluno), 2) AS Media_Geral
-FROM NotasInternet
-GROUP BY IND_ACE_INT
-ORDER BY Media_Geral DESC;
-
--- Desempenho por escolaridade da mãe (Indicador forte de capital cultural)
-WITH NotasEscolaridadeMae AS (
-    SELECT 
-        s.COD_ESC_MAE,
-        (f.VAL_NOT_NAT + f.VAL_NOT_HUM + f.VAL_NOT_LIN + f.VAL_NOT_MAT + f.VAL_NOT_RED) / 5 AS media_aluno
-    FROM dw.FAT_DES f
-    JOIN dw.DIM_SOC s ON f.SOC_SRK = s.SOC_SRK
-    WHERE f.IND_PRE_NAT = 1 
-      AND f.IND_PRE_HUM = 1 
-      AND f.IND_PRE_LIN = 1 
-      AND f.IND_PRE_MAT = 1
-)
-SELECT 
-    CASE COD_ESC_MAE
-        WHEN 'A' THEN 'Nunca estudou'
-        WHEN 'B' THEN 'Não completou a 4ª série/5º ano do Ensino Fundamental'
-        WHEN 'C' THEN 'Completou a 4ª série/5º ano, mas não completou a 8ª série/9º ano do Ensino Fundamental'
-        WHEN 'D' THEN 'Completou a 8ª série/9º ano do Ensino Fundamental, mas não completou o Ensino Médio'
-        WHEN 'E' THEN 'Completou o Ensino Médio, mas não completou a Faculdade'
-        WHEN 'F' THEN 'Completou a Faculdade, mas não completou a Pós-graduação'
-        WHEN 'G' THEN 'Completou a Pós-graduação'
-        WHEN 'H' THEN 'Não sabe'
-        ELSE 'Não Informado'
-    END AS Escolaridade_Mae,
-    COUNT(*) AS Qtd_Candidatos,
-    ROUND(AVG(media_aluno), 2) AS Media_Geral
-FROM NotasEscolaridadeMae
-GROUP BY COD_ESC_MAE
-ORDER BY COD_ESC_MAE;
-
--- Comparativo de desempenho por Gênero
-WITH NotasGenero AS (
-    SELECT 
-        p.TIP_SEX,
-        (f.VAL_NOT_NAT + f.VAL_NOT_HUM + f.VAL_NOT_LIN + f.VAL_NOT_MAT + f.VAL_NOT_RED) / 5 AS media_aluno
-    FROM dw.FAT_DES f
-    JOIN dw.DIM_PAR p ON f.PAR_SRK = p.PAR_SRK
-    WHERE f.IND_PRE_NAT = 1 
-      AND f.IND_PRE_HUM = 1 
-      AND f.IND_PRE_LIN = 1 
-      AND f.IND_PRE_MAT = 1
-)
-SELECT 
-    CASE TIP_SEX
-        WHEN 'M' THEN 'Masculino'
-        WHEN 'F' THEN 'Feminino'
-        ELSE 'Não Informado'
-    END AS Genero,
-    COUNT(*) AS Qtd_Candidatos,
-    ROUND(AVG(media_aluno), 2) AS Media_Geral
-FROM NotasGenero
-GROUP BY TIP_SEX
-ORDER BY Media_Geral DESC;
-
--- Verifica os 5 municípios com maior desvio padrão
+-- verifica os 5 municípios com maior desvio padrão
 SELECT 
     l.NOM_MUN AS Municipio,
     ROUND(AVG((f.VAL_NOT_NAT + f.VAL_NOT_HUM + f.VAL_NOT_LIN + f.VAL_NOT_MAT + f.VAL_NOT_RED) / 5), 2) AS Media_Geral,
@@ -248,7 +32,7 @@ HAVING COUNT(*) > 1
 ORDER BY Desvio_Padrao DESC
 LIMIT 25;
 
--- Maiores notas por prova e município
+-- maiores notas por prova e município
 SELECT DISTINCT
     L.NOM_MUN AS Municipio,
     F.VAL_NOT_MAT AS Nota_Matematica
@@ -288,20 +72,269 @@ WHERE F.VAL_NOT_LIN IS NOT NULL
 ORDER BY F.VAL_NOT_LIN DESC
 LIMIT 6;
 
--- Média por área de todos os municípios
+-- divisão de pessoas que escolheram linguagens
 SELECT 
-    L.NOM_MUN,
-    ROUND(AVG(f.VAL_NOT_NAT), 2) AS Media_Natureza,
-    ROUND(AVG(f.VAL_NOT_HUM), 2) AS Media_Humanas,
-    ROUND(AVG(f.VAL_NOT_LIN), 2) AS Media_Linguagens,
-    ROUND(AVG(f.VAL_NOT_MAT), 2) AS Media_Matematica,
-    ROUND(AVG(f.VAL_NOT_RED), 2) AS Media_Redacao,
-    ROUND(AVG((f.VAL_NOT_NAT + f.VAL_NOT_HUM + f.VAL_NOT_LIN + f.VAL_NOT_MAT + f.VAL_NOT_RED) / 5), 2) AS Media_Geral
+    CASE p.TIP_LIN 
+        WHEN 0 THEN 'Inglês'
+        WHEN 1 THEN 'Espanhol'
+        ELSE 'Não Informado'
+    END AS Lingua_Estrangeira,
+    COUNT(*) AS Total_Candidatos,
+    ROUND(
+        (COUNT(*) * 100.0) / SUM(COUNT(*)) OVER(), 
+        2
+    ) AS Percentual_Representatividade
+FROM dw.FAT_DES f
+JOIN dw.DIM_PRV p ON f.PRV_SRK = p.PRV_SRK
+GROUP BY p.TIP_LIN
+ORDER BY Total_Candidatos DESC;
+
+-- distribuição de Notas da Redação 
+ITH FaixasRedacao AS (
+    SELECT 
+        CASE 
+            WHEN f.VAL_NOT_RED = 0 THEN '0. Zerou'
+            WHEN f.VAL_NOT_RED BETWEEN 1 AND 200 THEN '1. Muito Baixa (1-200)'
+            WHEN f.VAL_NOT_RED BETWEEN 201 AND 400 THEN '2. Baixa (201-400)'
+            WHEN f.VAL_NOT_RED BETWEEN 401 AND 600 THEN '3. Média (401-600)'
+            WHEN f.VAL_NOT_RED BETWEEN 601 AND 800 THEN '4. Boa (601-800)'
+            WHEN f.VAL_NOT_RED BETWEEN 801 AND 999 THEN '5. Muito Boa (801-999)'
+            WHEN f.VAL_NOT_RED = 1000 THEN '6. Nota Mil (1000)'
+        END AS Faixa_Nota
+    FROM dw.FAT_DES f
+    JOIN dw.DIM_PRV p ON f.PRV_SRK = p.PRV_SRK
+    WHERE f.IND_PRE_LIN = 1 
+      AND f.VAL_NOT_RED IS NOT NULL
+)
+SELECT 
+    Faixa_Nota, 
+    COUNT(*) AS Qtd_Candidatos
+FROM FaixasRedacao
+WHERE Faixa_Nota IS NOT NULL 
+GROUP BY Faixa_Nota
+ORDER BY Faixa_Nota;
+
+-- análise dos Motivos de Nota Zero ou Problemas na Redação
+SELECT 
+    CASE p.COD_SIT_RED
+        WHEN 2 THEN 'Anulada'
+        WHEN 3 THEN 'Cópia Texto Motivador'
+        WHEN 4 THEN 'Em Branco'
+        WHEN 6 THEN 'Fuga ao Tema'
+        WHEN 7 THEN 'Não atendimento ao tipo textual'
+        WHEN 8 THEN 'Texto insuficiente'
+        WHEN 9 THEN 'Parte desconectada'
+        ELSE 'Outros Motivos'
+    END AS Situacao_Redacao,
+    COUNT(*) AS Total_Candidatos
+FROM dw.FAT_DES f
+JOIN dw.DIM_PRV p ON f.PRV_SRK = p.PRV_SRK
+WHERE f.IND_PRE_LIN = 1
+  AND p.COD_SIT_RED <> 1 
+GROUP BY Situacao_Redacao
+ORDER BY Total_Candidatos DESC;
+
+-- top 10 Municípios com melhores médias exclusivas de redação
+SELECT 
+    l.NOM_MUN AS Municipio,
+    ROUND(AVG(f.VAL_NOT_RED), 2) AS Media_Redacao
 FROM dw.FAT_DES f
 JOIN dw.DIM_LOC l ON f.LOC_SRK = l.LOC_SRK
-WHERE f.IND_PRE_NAT = 1 
-  AND f.IND_PRE_HUM = 1 
-  AND f.IND_PRE_LIN = 1 
-  AND f.IND_PRE_MAT = 1
+WHERE f.IND_PRE_LIN = 1 
+  AND f.VAL_NOT_RED > 0
 GROUP BY l.NOM_MUN
-ORDER BY Media_Geral ASC; 
+HAVING COUNT(*) > 50 
+ORDER BY Media_Redacao DESC
+LIMIT 10;
+
+-- desempenho de notas por faixa de renda declarada
+SELECT 
+    CASE s.COD_REN_FAM
+        WHEN 'A' THEN '01. Nenhuma Renda'
+        WHEN 'B' THEN '02. Até R$ 1.100'
+        WHEN 'C' THEN '03. R$ 1.100 - 1.650'
+        WHEN 'D' THEN '04. R$ 1.650 - 2.200'
+        WHEN 'E' THEN '05. R$ 2.200 - 2.750'
+        WHEN 'F' THEN '06. R$ 2.750 - 3.300'
+        WHEN 'G' THEN '07. R$ 3.300 - 4.400'
+        WHEN 'H' THEN '08. R$ 4.400 - 5.500'
+        WHEN 'I' THEN '09. R$ 5.500 - 6.600'
+        WHEN 'J' THEN '10. R$ 6.600 - 7.700'
+        WHEN 'K' THEN '11. R$ 7.700 - 8.800'
+        WHEN 'L' THEN '12. R$ 8.800 - 9.900'
+        WHEN 'M' THEN '13. R$ 9.900 - 11.000'
+        WHEN 'N' THEN '14. R$ 11.000 - 13.200'
+        WHEN 'O' THEN '15. R$ 13.200 - 16.500'
+        WHEN 'P' THEN '16. R$ 16.500 - 22.000'
+        WHEN 'Q' THEN '17. Acima de R$ 22.000'
+        ELSE '18. Não Declarado'
+    END AS Faixa_Renda,
+    ROUND(AVG((VAL_NOT_NAT + VAL_NOT_HUM + VAL_NOT_LIN + VAL_NOT_MAT + VAL_NOT_RED) / 5), 2) AS Media_Geral,
+    COUNT(*) AS Qtd_Candidatos
+FROM dw.FAT_DES f
+JOIN dw.DIM_SOC s ON f.SOC_SRK = s.SOC_SRK
+WHERE IND_PRE_NAT = 1 AND IND_PRE_HUM = 1 AND IND_PRE_LIN = 1 AND IND_PRE_MAT = 1
+GROUP BY s.COD_REN_FAM
+ORDER BY s.COD_REN_FAM;
+
+-- Perfil digital dos participantes
+WITH PerfilTecnologico AS (
+    SELECT 
+        CASE 
+            WHEN IND_ACE_INT = 'B' AND (COD_POS_COM = 'B' OR COD_POS_COM = 'C' OR COD_POS_COM = 'D' OR COD_POS_COM = 'E') THEN '1. Conectado (Internet + PC)'
+            WHEN IND_ACE_INT = 'B' AND COD_POS_COM = 'A' THEN '2. Acesso Limitado (Só Internet, Sem PC)'
+            WHEN IND_ACE_INT = 'A' AND (COD_POS_COM = 'B' OR COD_POS_COM = 'C' OR COD_POS_COM = 'D' OR COD_POS_COM = 'E') THEN '3. Offline com PC (Raro)'
+            ELSE '4. Excluído Digital (Sem Internet, Sem PC)'
+        END AS Status_Digital,
+        (VAL_NOT_NAT + VAL_NOT_HUM + VAL_NOT_LIN + VAL_NOT_MAT + VAL_NOT_RED) / 5 AS Nota_Media
+    FROM dw.FAT_DES f
+    JOIN dw.DIM_SOC s ON f.SOC_SRK = s.SOC_SRK
+    WHERE IND_PRE_NAT = 1 AND IND_PRE_HUM = 1 
+)
+SELECT 
+    Status_Digital,
+    ROUND(AVG(Nota_Media), 2) AS Media_Geral,
+    COUNT(*) AS Total
+FROM PerfilTecnologico
+GROUP BY Status_Digital
+ORDER BY Media_Geral DESC;
+
+-- Desempenho por raça
+WITH CalculoNotasRaca AS (
+    SELECT 
+        p.COD_COR_RAC,
+        (f.VAL_NOT_NAT + f.VAL_NOT_HUM + f.VAL_NOT_LIN + f.VAL_NOT_MAT + f.VAL_NOT_RED) / 5 AS media_candidato
+    FROM dw.FAT_DES f
+    JOIN dw.DIM_PAR p ON f.PAR_SRK = p.PAR_SRK
+    WHERE f.IND_PRE_NAT = 1 
+      AND f.IND_PRE_HUM = 1 
+      AND f.IND_PRE_LIN = 1 
+      AND f.IND_PRE_MAT = 1
+)
+SELECT 
+    CASE c.COD_COR_RAC
+        WHEN 0 THEN 'Não declarado'
+        WHEN 1 THEN 'Branca'
+        WHEN 2 THEN 'Preta'
+        WHEN 3 THEN 'Parda'
+        WHEN 4 THEN 'Amarela'
+        WHEN 5 THEN 'Indígena'
+        ELSE 'Outros/Nulo'
+    END AS Cor_Raca,
+    COUNT(*) AS Total_Candidatos,
+    ROUND(AVG(c.media_candidato), 2) AS Media_Geral_Enem
+FROM CalculoNotasRaca c
+GROUP BY c.COD_COR_RAC
+ORDER BY Media_Geral_Enem DESC;
+
+-- Influencia da mobilidade nas faltas
+WITH StatusCandidato AS (
+    SELECT 
+        SOC_SRK,
+        CASE 
+            WHEN IND_PRE_NAT = 0 OR IND_PRE_HUM = 0 OR IND_PRE_LIN = 0 OR IND_PRE_MAT = 0 
+            THEN 1 
+            ELSE 0 
+        END AS foi_faltante
+    FROM dw.FAT_DES
+)
+SELECT 
+    CASE 
+        WHEN s.COD_POS_CAR <> 'A' OR s.COD_POS_MOT <> 'A' THEN 'Possui Mobilidade (Carro/Moto)'
+        ELSE 'Não Possui Mobilidade Própria'
+    END AS Status_Mobilidade,
+    COUNT(*) AS Total_Inscritos,
+    SUM(c.foi_faltante) AS Qtd_Faltantes,
+    ROUND(
+        (SUM(c.foi_faltante) * 100.0) / NULLIF(COUNT(*), 0), 
+        2
+    ) AS Percentual_Faltantes
+FROM StatusCandidato c
+JOIN dw.DIM_SOC s ON c.SOC_SRK = s.SOC_SRK
+GROUP BY 1
+ORDER BY Percentual_Faltantes DESC;
+
+-- Mostra faixa de renda familiar, os inscritos nessa faixa, quantos faltantes e o percentual de faltantes
+WITH StatusCandidato AS (
+    SELECT 
+        SOC_SRK,
+        CASE 
+            WHEN IND_PRE_NAT = 0 OR IND_PRE_HUM = 0 OR IND_PRE_LIN = 0 OR IND_PRE_MAT = 0 
+            THEN 1 
+            ELSE 0 
+        END AS foi_faltante
+    FROM dw.FAT_DES
+)
+SELECT 
+    CASE s.COD_REN_FAM
+        WHEN 'A' THEN '01. Nenhuma Renda'
+        WHEN 'B' THEN '02. Até R$ 1.100'
+        WHEN 'C' THEN '03. R$ 1.100 - 1.650'
+        WHEN 'D' THEN '04. R$ 1.650 - 2.200'
+        WHEN 'E' THEN '05. R$ 2.200 - 2.750'
+        WHEN 'F' THEN '06. R$ 2.750 - 3.300'
+        WHEN 'G' THEN '07. R$ 3.300 - 4.400'
+        WHEN 'H' THEN '08. R$ 4.400 - 5.500'
+        WHEN 'I' THEN '09. R$ 5.500 - 6.600'
+        WHEN 'J' THEN '10. R$ 6.600 - 7.700'
+        WHEN 'K' THEN '11. R$ 7.700 - 8.800'
+        WHEN 'L' THEN '12. R$ 8.800 - 9.900'
+        WHEN 'M' THEN '13. R$ 9.900 - 11.000'
+        WHEN 'N' THEN '14. R$ 11.000 - 13.200'
+        WHEN 'O' THEN '15. R$ 13.200 - 16.500'
+        WHEN 'P' THEN '16. R$ 16.500 - 22.000'
+        WHEN 'Q' THEN '17. Acima de R$ 22.000'
+        ELSE '18. Não Declarado'
+    END AS Faixa_Renda_Descritiva,
+    COUNT(*) AS Total_Inscritos,
+    SUM(c.foi_faltante) AS Qtd_Faltantes,
+    ROUND(
+        (SUM(c.foi_faltante) * 100.0) / COUNT(*), 
+        2
+    ) AS Percentual_Faltantes
+FROM StatusCandidato c
+JOIN dw.DIM_SOC s ON c.SOC_SRK = s.SOC_SRK
+GROUP BY s.COD_REN_FAM
+ORDER BY s.COD_REN_FAM;
+
+-- Contagem de faltas por dias de prova
+SELECT * FROM (
+    SELECT 
+        CASE 
+            WHEN f.IND_PRE_LIN = 1 AND f.IND_PRE_MAT = 1 THEN '1. Presente nos dois dias'
+            WHEN f.IND_PRE_LIN = 1 AND f.IND_PRE_MAT = 0 THEN '2. Desistente (Veio Dia 1, Faltou Dia 2)'
+            WHEN f.IND_PRE_LIN = 0 AND f.IND_PRE_MAT = 1 THEN '3. Atípico (Faltou Dia 1, Veio Dia 2)'
+            WHEN f.IND_PRE_LIN = 0 AND f.IND_PRE_MAT = 0 THEN '4. Ausente Total (Faltou os dois dias)'
+        END AS Status_Presenca,
+        COUNT(*) AS Qtd_Candidatos
+    FROM dw.FAT_DES f
+    JOIN dw.DIM_PAR p ON f.PAR_SRK = p.PAR_SRK 
+    GROUP BY 1
+) subconsulta
+WHERE Status_Presenca IS NOT NULL
+ORDER BY 1;
+
+-- Abstenções por raça e cor
+SELECT 
+    CASE p.COD_COR_RAC
+        WHEN 0 THEN 'Não Declarado'
+        WHEN 1 THEN 'Branca'
+        WHEN 2 THEN 'Preta'
+        WHEN 3 THEN 'Parda'
+        WHEN 4 THEN 'Amarela'
+        WHEN 5 THEN 'Indígena'
+        ELSE 'Outros'
+    END AS Raca_Cor,
+    COUNT(*) AS Total_Inscritos,
+    SUM(CASE 
+        WHEN f.IND_PRE_LIN = 0 OR f.IND_PRE_MAT = 0 THEN 1 
+        ELSE 0 
+    END) AS Qtd_Faltantes,
+    ROUND(
+        (SUM(CASE WHEN f.IND_PRE_LIN = 0 OR f.IND_PRE_MAT = 0 THEN 1 ELSE 0 END) * 100.0) 
+        / COUNT(*), 
+    2) AS Taxa_Abstencao_Percentual
+FROM dw.FAT_DES f
+JOIN dw.DIM_PAR p ON f.PAR_SRK = p.PAR_SRK
+GROUP BY p.COD_COR_RAC
+ORDER BY Taxa_Abstencao_Percentual DESC; 
