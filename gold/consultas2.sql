@@ -199,26 +199,33 @@ FROM PerfilTecnologico
 GROUP BY Status_Digital
 ORDER BY Media_Geral DESC;
 
--- influencia da mobilidade nas notas 
+-- Desempenho por raça
+WITH CalculoNotasRaca AS (
+    SELECT 
+        p.COD_COR_RAC,
+        (f.VAL_NOT_NAT + f.VAL_NOT_HUM + f.VAL_NOT_LIN + f.VAL_NOT_MAT + f.VAL_NOT_RED) / 5 AS media_candidato
+    FROM dw.FAT_DES f
+    JOIN dw.DIM_PAR p ON f.PAR_SRK = p.PAR_SRK
+    WHERE f.IND_PRE_NAT = 1 
+      AND f.IND_PRE_HUM = 1 
+      AND f.IND_PRE_LIN = 1 
+      AND f.IND_PRE_MAT = 1
+)
 SELECT 
-    CASE 
-        WHEN COD_POS_CAR <> 'A' AND COD_POS_MOT <> 'A' THEN 'Carro e Moto'
-        WHEN COD_POS_CAR <> 'A' THEN 'Só Carro'
-        WHEN COD_POS_MOT <> 'A' THEN 'Só Moto'
-        ELSE 'Sem Veículo'
-    END AS Perfil_Transporte,
-    ROUND(AVG((VAL_NOT_NAT + VAL_NOT_HUM + VAL_NOT_LIN + VAL_NOT_MAT + VAL_NOT_RED) / 5), 2) AS Media_Geral
-FROM dw.FAT_DES f
-JOIN dw.DIM_SOC s ON f.SOC_SRK = s.SOC_SRK
-WHERE IND_PRE_NAT = 1
-GROUP BY 
-    CASE 
-        WHEN COD_POS_CAR <> 'A' AND COD_POS_MOT <> 'A' THEN 'Carro e Moto'
-        WHEN COD_POS_CAR <> 'A' THEN 'Só Carro'
-        WHEN COD_POS_MOT <> 'A' THEN 'Só Moto'
-        ELSE 'Sem Veículo'
-    END
-ORDER BY Media_Geral DESC;
+    CASE c.COD_COR_RAC
+        WHEN 0 THEN 'Não declarado'
+        WHEN 1 THEN 'Branca'
+        WHEN 2 THEN 'Preta'
+        WHEN 3 THEN 'Parda'
+        WHEN 4 THEN 'Amarela'
+        WHEN 5 THEN 'Indígena'
+        ELSE 'Outros/Nulo'
+    END AS Cor_Raca,
+    COUNT(*) AS Total_Candidatos,
+    ROUND(AVG(c.media_candidato), 2) AS Media_Geral_Enem
+FROM CalculoNotasRaca c
+GROUP BY c.COD_COR_RAC
+ORDER BY Media_Geral_Enem DESC;
 
 -- Influencia da mobilidade nas faltas
 WITH StatusCandidato AS (
