@@ -245,3 +245,27 @@ FROM StatusCandidato c
 JOIN dw.DIM_SOC s ON c.SOC_SRK = s.SOC_SRK
 GROUP BY 1
 ORDER BY Percentual_Faltantes DESC;
+
+-- Mostra faixa de renda familiar, os inscritos nessa faixa, quantos faltantes e o percentual de faltantes
+WITH StatusCandidato AS (
+    SELECT 
+        SOC_SRK,
+        CASE 
+            WHEN IND_PRE_NAT = 0 OR IND_PRE_HUM = 0 OR IND_PRE_LIN = 0 OR IND_PRE_MAT = 0 
+            THEN 1 
+            ELSE 0 
+        END AS foi_faltante
+    FROM dw.FAT_DES
+)
+SELECT 
+    s.COD_REN_FAM AS Faixa_Renda,
+    COUNT(*) AS Total_Inscritos,
+    SUM(c.foi_faltante) AS Qtd_Faltantes,
+    ROUND(
+        (SUM(c.foi_faltante) * 100.0) / COUNT(*), 
+        2
+    ) AS Percentual_Faltantes
+FROM StatusCandidato c
+JOIN dw.DIM_SOC s ON c.SOC_SRK = s.SOC_SRK
+GROUP BY s.COD_REN_FAM
+ORDER BY s.COD_REN_FAM;
